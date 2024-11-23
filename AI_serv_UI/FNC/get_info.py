@@ -11,7 +11,7 @@ def get_data() :
 
     # CSV 파일 읽기
     student_df = pd.read_csv(csv_path)
-    teacher_df = pd.read_csv(r"C:\AI_serv_UI\FNC\teacher_data.csv")
+    teacher_df = pd.read_csv(r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\FNC\teacher_data.csv")
 
     
 
