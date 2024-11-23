@@ -12,10 +12,6 @@ import FNC.get_info as GIF
 import FNC.utils as ut
 from sklearn.impute import KNNImputer
 
-
-
-
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.join(current_dir, '..')
 sys.path.append(parent_dir)
@@ -121,6 +117,31 @@ def create_and_train_model(x_data, y_data):
     return model
 
 
+stdf = load_and_preprocess_data()
+
+x_data = []
+y_data = stdf['chance of admit'].values
+
+for i, row in stdf.iterrows():
+                    x_data.append([
+                        row['Korean'], row['Math'], row['English'], 
+                        row['Inquiry 1'], row['Inquiry 2'], 
+                        row['Tutoring Period'], row['University_rank']
+                    ])
+                                
+x_data = pd.DataFrame(x_data, columns=['Korean', 'Math', 'English', 'Inquiry 1', 'Inquiry 2', 'Tutoring Period', 'University_rank'])
+                
+                            
+x_data = np.array(x_data)
+y_data = np.array(y_data)
+                            
+                        
+scaler = MinMaxScaler()
+x_data = scaler.fit_transform(x_data)
+            
+
+
+model = create_and_train_model(x_data, y_data)
 
 
 from tkinter import *
@@ -172,10 +193,7 @@ def nextpage() :
     if idx > 2: 
         clear_entries()
 
-def yes_button_click():
-    # 여기서 모델을 전달하여 task 함수 호출
-    task()
-        
+
 
 
 def prepage():
@@ -212,14 +230,14 @@ def update_buttons():
             entry_labels[i].pack()
             entry.pack()
         
-        yesButton.config(state=NORMAL, command = yes_button_click )
+        yesButton.config(state=NORMAL, command = task )
                 
         
-        target_univ_label.place(x= 200, y = 300)
-        target_univ_combobox.place(x= 185, y = 350)
-        predictlabel.place(x= 175, y = 400)
-        show_values_btn.place(x=300, y=500)
-        yesButton.place(x = 250, y = 425)
+        target_univ_label.pack() 
+        target_univ_combobox.pack() # 대학 설정 박스
+        predictlabel.place(x= 125, y = 400)
+        show_values_btn.pack()
+        yesButton.pack() # 예측 트리거 버튼
         
             
             
@@ -257,152 +275,127 @@ def validate_entries(*args):
 
 
 def task() :
-    import time
-    predictlabel.config(text = "잠시만 기다려 주십시오 ...")
-    time.time(3)
-    predictlabel.config(f"{target_univ}의 합격률은 {res[0][0] * 100:.2f}% 입니다.")
+    global model, input_data
     update_buttons()
+    
+    predictlabel.config(text = "잠시만 기다려 주십시오 ...")
+
+    target_univ = target_univ_var.get()
+    target_univ_rank = university_rankings.get(target_univ, 0)
+
+    try :
+        input_data = [float(var.get()) if var.get().strip() != '' else 0.0 for var in entry_vars]
+        input_data.append(float(target_univ_rank))  # 대학 랭크 추가
+        input_data = np.array(input_data).reshape(1, -1)  # NumPy 배열로 변환
+        res = model.predict(input_data)
+    except ValueError:
+        predictlabel.config(text="입력값에 숫자가 아닌 항목이 있습니다.")
+        return
+    try:
+        input_data = scaler.transform(input_data)
+        res = model.predict(input_data)
+        predictlabel.config(
+            text=f"{target_univ}의 합격률은 {res[0][0] * 100:.2f}% 입니다."
+        )
+    except Exception as e:
+        predictlabel.config(text=f"예측 중 오류 발생: {str(e)}")
+
+    
         
         
     
 
 
 
-
-Mainimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\002.png")
-Infoimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\003.png")
-entryimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\grade.png")
-infoentryimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\005.png")
-matchingimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\matching.png")
-
-Mainimg = Mainimg.subsample(x=int(Mainimg.width() /width), y =int(Mainimg.height()/height))
-Infoimg = Infoimg.subsample(x=int(Infoimg.width() /width), y =int(Infoimg.height()/height))
-entryimg = entryimg.subsample(x=int(entryimg.width() /width), y =int(entryimg.height()/height))
-infoentryimg = infoentryimg.subsample(x=int(infoentryimg.width() /width), y =int(infoentryimg.height()/height))
-matchingimg = matchingimg.subsample(x=int(matchingimg.width() / 300), y =int(matchingimg.height()/ 200))
-
-
-imges =  [Mainimg,
-        Infoimg,
-        entryimg,
-        matchingimg,
-        infoentryimg]
-
-#제일 처음 화면
-labelimg= Label(root, image = imges[idx])
-labelimg.pack()
-
-
-nextbtn = Button(root, text = '다음',  command = nextpage, state=NORMAL, width=5, height=1)
-nextbtn.place(x=250, y =550)
-prebtn = Button(root, text = '이전',  command = prepage, state=NORMAL, width=5, height=1)
-prebtn.place(x=200, y =550)
-
-#동의 버튼
-agreeimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\동의함.PNG")
-width = 25
-height = 25
-agreeimge = agreeimg.subsample(x=int(agreeimg.width() / 1), y = int(agreeimg.height() / 1))
-agreebtn = Button(root, text="동의", command=lambda: CheckVar1.set(1), image = agreeimg)
-agreebtn.place_forget()
-
-entry_labels_texts = ["1.국어 등급", "2.수학 등급", "3.영어 등급", "4.탐구1 등급", "5.탐구2 등급", "6.과외 받은 기간(1~4년)"]
-
-for i, text in enumerate(entry_labels_texts):
-    var = StringVar()
-    label = Label(root, text = text)
-    entry = Entry(root, textvariable=var,)
-    entry_labels.append(label)
-    entry_widgets.append(entry)
-    entry_vars.append(var) 
-
-import sys
-import os
-sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'FNC'))
-sys.path.append(r"C:\Users\wawa2\OneDrive\바탕 화면\AI_serv_UI")
-sys.path.append(r"C:\Users\wawa2\OneDrive\바탕 화면\AI_serv_UI\FNC")
-import FNC.get_info as GIF
-
-_, unive_list, _ = GIF.get_data()
-
-def update_predictlabel(*args):
-    selected_univ = target_univ_var.get()
-    if selected_univ:
-        predictlabel.config(text=f"목표대학 {selected_univ}의 합격률을 예측하시겠습니까?")
-    else:
-        predictlabel.config(text="목표 대학을 선택하십시오.")
-
-# 목표대학은 target_univ_var에 저장
-target_univ_var = StringVar()
-target_univ_label = Label(root, text="목표 대학을 선택하세요.")
-
-target_univ_var.trace_add("write", update_predictlabel)
-
-target_univ_combobox = ttk.Combobox(root, textvariable=target_univ_var, values=unive_list)
-show_values_btn = Button(root, text="입력값 출력", command=show_values)
-
-
-predictlabel = Label(root, text = f"목표대학 {target_univ_var}의 합격률을 예측하시겠습니까?")
-yesButton = Button (root, text = "예", state=NORMAL, width=5, height=1)
-
-
-
-
-root.mainloop()
-
-    
-    
-
-    
-
-
-    
 
 if __name__ == "__main__":
 #데이터 로딩
 # 모델 정의 및 학습
 
 
+    Mainimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\002.png")
+    Infoimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\003.png")
+    entryimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\grade.png")
+    infoentryimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\005.png")
+    matchingimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\matching.png")
 
-    stdf = load_and_preprocess_data()
-
-    x_data = []
-    y_data = stdf['chance of admit'].values
-
-    for i, row in stdf.iterrows():
-                        x_data.append([
-                            row['Korean'], row['Math'], row['English'], 
-                            row['Inquiry 1'], row['Inquiry 2'], 
-                            row['Tutoring Period'], row['University_rank']
-                        ])
-                                    
-    x_data = pd.DataFrame(x_data, columns=['Korean', 'Math', 'English', 'Inquiry 1', 'Inquiry 2', 'Tutoring Period', 'University_rank'])
-                    
-                                
-    x_data = np.array(x_data)
-    y_data = np.array(y_data)
-                                
-                            
-    scaler = MinMaxScaler()
-    x_data = scaler.fit_transform(x_data)
-            
-        
-    model = create_and_train_model(x_data, y_data)
+    Mainimg = Mainimg.subsample(x=int(Mainimg.width() /width), y =int(Mainimg.height()/height))
+    Infoimg = Infoimg.subsample(x=int(Infoimg.width() /width), y =int(Infoimg.height()/height))
+    entryimg = entryimg.subsample(x=int(entryimg.width() /width), y =int(entryimg.height()/height))
+    infoentryimg = infoentryimg.subsample(x=int(infoentryimg.width() /width), y =int(infoentryimg.height()/height))
+    matchingimg = matchingimg.subsample(x=int(matchingimg.width() / 300), y =int(matchingimg.height()/ 200))
 
 
+    imges =  [Mainimg,
+            Infoimg,
+            entryimg,
+            matchingimg,
+            infoentryimg]
 
-    target_univ = target_univ_var.get()
-    target_univ_rank = university_rankings.get(target_univ, 0)
+    #제일 처음 화면
+    labelimg= Label(root, image = imges[idx])
+    labelimg.pack()
 
-    input_data = np.array([var.get() for var in entry_vars] + [target_univ_rank])
-    input_data = input_data.reshape(1, -1)
 
-    from sklearn.preprocessing import MinMaxScaler
-    scaler = MinMaxScaler()
-    input_data = scaler.transform(input_data)
+    nextbtn = Button(root, text = '다음',  command = nextpage, state=NORMAL, width=5, height=1)
+    nextbtn.place(x=250, y =550)
+    prebtn = Button(root, text = '이전',  command = prepage, state=NORMAL, width=5, height=1)
+    prebtn.place(x=200, y =550)
 
-    res = model.predict(input_data)
-    print(res)
+    #동의 버튼
+    agreeimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\동의함.PNG")
+    width = 25
+    height = 25
+    agreeimge = agreeimg.subsample(x=int(agreeimg.width() / 1), y = int(agreeimg.height() / 1))
+    agreebtn = Button(root, text="동의", command=lambda: CheckVar1.set(1), image = agreeimg)
+    agreebtn.place_forget()
+
+    entry_labels_texts = ["1.국어 등급", "2.수학 등급", "3.영어 등급", "4.탐구1 등급", "5.탐구2 등급", "6.과외 받은 기간(1~4년)"]
+
+    for i, text in enumerate(entry_labels_texts):
+        var = StringVar()
+        label = Label(root, text = text)
+        entry = Entry(root, textvariable=var,)
+        entry_labels.append(label)
+        entry_widgets.append(entry)
+        entry_vars.append(var) 
+
+    import sys
+    import os
+    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'FNC'))
+    sys.path.append(r"C:\Users\wawa2\OneDrive\바탕 화면\AI_serv_UI")
+    sys.path.append(r"C:\Users\wawa2\OneDrive\바탕 화면\AI_serv_UI\FNC")
+    import FNC.get_info as GIF
+
+    _, unive_list, _ = GIF.get_data()
+
+    def update_predictlabel(*args):
+        selected_univ = target_univ_var.get()
+        if selected_univ:
+            predictlabel.config(text=f"목표대학 {selected_univ}의 합격률을 예측하시겠습니까?")
+        else:
+            predictlabel.config(text="목표 대학을 선택하십시오.")
+
+    # 목표대학은 target_univ_var에 저장
+    target_univ_var = StringVar()
+    target_univ_label = Label(root, text="목표 대학을 선택하세요.")
+
+    target_univ_var.trace_add("write", update_predictlabel)
+
+    target_univ_combobox = ttk.Combobox(root, textvariable=target_univ_var, values=unive_list)
+    show_values_btn = Button(root, text="입력값 출력", command=show_values)
+
+
+    predictlabel = Label(root, text = f"목표대학 {target_univ_var}의 합격률을 예측하시겠습니까?")
+    yesButton = Button (root, text = "예", state=NORMAL, width=5, height=1)
+
+    root.mainloop()
+
+
+
+    
+    
+    
     
 
 
