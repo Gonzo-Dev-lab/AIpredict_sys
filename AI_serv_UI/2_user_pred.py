@@ -77,6 +77,11 @@ def load_and_preprocess_data():
     stdf['University_rank'] = stdf['University'].map(university_rankings)
     
     
+    #랭크가 0인 대학들을 대학랭크들의 평균값으로 계싼
+    avg_rank = stdf.loc[stdf['University_rank'] > 0, 'University_rank'].mean()  # 0 제외한 평균 계산
+    stdf['University_rank'] = stdf['University_rank'].replace(0, avg_rank)
+    
+    
     
     
     # 'serial No' 열 제거
@@ -94,30 +99,46 @@ def load_and_preprocess_data():
         stdf.update(stdf_imputed_df)
     
     # 이상치 처리
-    lower_bound = stdf.quantile(0.01)
-    upper_bound = stdf.quantile(0.99)
-    stdf = stdf.clip(lower=lower_bound, upper=upper_bound, axis=1)
+    print(stdf.head(5))
     
     return stdf
 
+stdf = load_and_preprocess_data()
+
+
+
 def create_and_train_model(x_data, y_data):
+    
+ 
+    
     model = tf.keras.models.Sequential([
-        tf.keras.layers.Dense(64, activation='relu', kernel_initializer=tf.keras.initializers.HeNormal()),
-        tf.keras.layers.Dropout(0.5),
-        tf.keras.layers.Dense(128, activation='relu', kernel_initializer=tf.keras.initializers.HeNormal()),
+        tf.keras.layers.Dense(64, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dropout(0.3),
         tf.keras.layers.Dense(1, activation='sigmoid'),
     ])
 
+        
     
-    model.compile(optimizer='adam',  loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),  loss='mse', metrics=['accuracy'])
     
     
-    model.fit(x_data, y_data, epochs=150)
+    
+    model.fit(x_data, y_data, epochs=100)
+    
+
     
     return model
+    
+ 
 
 
-stdf = load_and_preprocess_data()
+
+    
+
+
+
 
 x_data = []
 y_data = stdf['chance of admit'].values
@@ -130,14 +151,23 @@ for i, row in stdf.iterrows():
                     ])
                                 
 x_data = pd.DataFrame(x_data, columns=['Korean', 'Math', 'English', 'Inquiry 1', 'Inquiry 2', 'Tutoring Period', 'University_rank'])
+
                 
                             
 x_data = np.array(x_data)
 y_data = np.array(y_data)
-                            
+
+
+print(x_data) 
                         
-scaler = MinMaxScaler()
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
 x_data = scaler.fit_transform(x_data)
+
+
+negative_values = x_data[x_data < 0]
+print("Number of negative values:", negative_values.size)
+print("Locations of negative values:", np.where(x_data < 0))
             
 
 
