@@ -9,7 +9,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '
 sys.path.append(r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI")
 sys.path.append(r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\FNC")
 import FNC.get_info as GIF
-import FNC.utils as ut
+import pages.utils as ut
 from sklearn.impute import KNNImputer
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -98,8 +98,7 @@ def load_and_preprocess_data():
         stdf_imputed_df = pd.DataFrame(stdf_imputed, columns=stdf_numeric.columns)
         stdf.update(stdf_imputed_df)
     
-    # 이상치 처리
-    print(stdf.head(5))
+    
     
     return stdf
 
@@ -132,12 +131,6 @@ def create_and_train_model(x_data, y_data):
     return model
     
  
-
-
-
-    
-
-
 
 
 x_data = []
@@ -218,11 +211,13 @@ def nextpage() :
     if idx == 2:  # 2번째 페이지에서 엔트리와 라벨 표시
         # 이전 페이지의 엔트리와 라벨을 숨깁니다.
         update_buttons() 
-        
-
-    if idx > 2: 
+      
+    if idx == 3:
         clear_entries()
+        update_buttons()
 
+    if idx == 4:
+        update_buttons()
 
 
 
@@ -231,13 +226,22 @@ def prepage():
 
     idx -= 1
     labelimg.config(image = imges[idx])
-    update_buttons()
+    if idx == 4:
+        update_buttons()
+
+    if idx == 3:
+        update_buttons()
 
     if idx ==  2 :
         update_buttons() 
        
     if idx == 1 :
-        clear_entries() 
+        clear_entries()
+
+def plusidx():
+    global idx
+    idx += 1
+    labelimg.config(image = imges[idx])  
 
 
 def update_buttons():
@@ -268,27 +272,62 @@ def update_buttons():
         predictlabel.place(x= 125, y = 400)
         show_values_btn.pack()
         yesButton.pack() # 예측 트리거 버튼
-        
-            
-            
 
-    else:
+        
+
+    elif idx < 2 or idx > 2:
         labelimg.pack()
         for entry in entry_widgets:
             entry.place_forget()
         for label in entry_labels:
             label.place_forget()
 
-        show_values_btn.place_forget()
+        show_values_btn.pack_forget()
         predictlabel.place_forget()
-        target_univ_label.place_forget()
-        yesButton.place_forget()
-        target_univ_combobox.place_forget()
+        target_univ_label.pack_forget()
+        yesButton.pack_forget()
+        target_univ_combobox.pack_forget()
 
+    if idx == 3:
+        clear_entries()
+        
+        avg = avgGrade()
+        avgtext.config(text = avg, font = "Arial", size = 20, weight = "bold")
+        avglabel.place(x=100, y = 50)
+        showlabel.place(x=100, y = 100)
+        avgtext.place(x=250, y = 75)
+    
+        targetlabel.place(x=250, y = 130)
+        tragetText.config(font = "Arial", size = 20, weight = "bold")
+        tragetText.place(x=250, y = 125)
+        showlabel2.place(x=250, y = 145)
+        
+        MatchingBtn.config(command = plusidx)
+        MatchingBtn.place(x=250, y = 400)
+
+    elif idx < 3 or idx > 3:
+        avgtext.place_forget()
+        avglabel.place_forget()
+        showlabel.place_forget()
+        showlabel2.place_forget()
+        avgtext.place_forget()
+        targetlabel.place_forget()
+        tragetText.place_forget()
+        MatchingBtn.place_forget()
+
+
+    if idx == 4:
+        update_buttons()
+
+        pass
+        
+        
+            
+        
 def show_values():
     """모든 엔트리 값 출력."""
     for i, var in enumerate(entry_vars):
-        print(f"{entry_labels_texts[i]}: {var.get()}")
+        print(f"{entry_labels_file[i]}: {var.get()}")
         if var :
              print("True")
         else :
@@ -301,8 +340,6 @@ def validate_entries(*args):
     if all_filled:
         yesButton.config(state=NORMAL, command=task)
    
-
-
 
 def task() :
     global model, input_data
@@ -331,6 +368,18 @@ def task() :
         predictlabel.config(text=f"예측 중 오류 발생: {str(e)}")
 
     
+def avgGrade():
+   global entry_vars
+   sumvar = 0
+   for var in entry_vars:
+        try:
+            value = float(var.get())  # StringVar에서 값을 가져와 변환
+            sumvar += value
+        except ValueError:
+            print("숫자가 아닌 값이 입력되었습니다.")  # 예외 처리
+            return None
+        avg = sumvar / len(entry_vars)
+        return avg
         
         
     
@@ -346,21 +395,18 @@ if __name__ == "__main__":
     Mainimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\002.png")
     Infoimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\003.png")
     entryimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\grade.png")
-    infoentryimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\005.png")
     matchingimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\matching.png")
 
     Mainimg = Mainimg.subsample(x=int(Mainimg.width() /width), y =int(Mainimg.height()/height))
     Infoimg = Infoimg.subsample(x=int(Infoimg.width() /width), y =int(Infoimg.height()/height))
     entryimg = entryimg.subsample(x=int(entryimg.width() /width), y =int(entryimg.height()/height))
-    infoentryimg = infoentryimg.subsample(x=int(infoentryimg.width() /width), y =int(infoentryimg.height()/height))
     matchingimg = matchingimg.subsample(x=int(matchingimg.width() / 300), y =int(matchingimg.height()/ 200))
 
 
     imges =  [Mainimg,
             Infoimg,
-            entryimg,
-            matchingimg,
-            infoentryimg]
+            "",
+            ""]
 
     #제일 처음 화면
     labelimg= Label(root, image = imges[idx])
@@ -372,7 +418,7 @@ if __name__ == "__main__":
     prebtn = Button(root, text = '이전',  command = prepage, state=NORMAL, width=5, height=1)
     prebtn.place(x=200, y =550)
 
-    #동의 버튼
+    #동의 버튼 2페이지
     agreeimg = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\동의함.PNG")
     width = 25
     height = 25
@@ -380,11 +426,23 @@ if __name__ == "__main__":
     agreebtn = Button(root, text="동의", command=lambda: CheckVar1.set(1), image = agreeimg)
     agreebtn.place_forget()
 
-    entry_labels_texts = ["1.국어 등급", "2.수학 등급", "3.영어 등급", "4.탐구1 등급", "5.탐구2 등급", "6.과외 받은 기간(1~4년)"]
+    #3페이지 idx == 2 
+    grade1 = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\grade1.png"), 
+    grade2 = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\grade2.png"), 
+    grade3 = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\grade3.png"), 
+    grade4 = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\grade4.png"), 
+    grade5 = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\grade5.png"), 
+    gradet = PhotoImage(file = r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\tutorlabel.png")
 
-    for i, text in enumerate(entry_labels_texts):
+    entry_labels_file = [grade1, grade2, grade3, grade4, grade5, gradet]
+    for file in entry_labels_file :
+        file.subsample(x=int(file.width() /width), y =int(file.height()/height))
+   
+    
+
+    for i, img in enumerate(entry_labels_file):
         var = StringVar()
-        label = Label(root, text = text)
+        label = Label(root, image = img)
         entry = Entry(root, textvariable=var,)
         entry_labels.append(label)
         entry_widgets.append(entry)
@@ -418,6 +476,27 @@ if __name__ == "__main__":
 
     predictlabel = Label(root, text = f"목표대학 {target_univ_var}의 합격률을 예측하시겠습니까?")
     yesButton = Button (root, text = "예", state=NORMAL, width=5, height=1)
+
+    #4페이지 idx == 3
+    selected_univ = target_univ_var.get()
+    avgimg = PhotoImage(file=r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\avgGrade.png")
+    showimg = PhotoImage(file =r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\입력창.PNG" )
+    targetimg = PhotoImage(file =r"C:\Users\wawa2\OneDrive\Desktop\AI project\AIpredict_sys\AI_serv_UI\Images\taget_unive.png" )
+
+    avgimg.subsample(x=int(avgimg.width() /200), y =int(avgimg.height()/100))
+    showimg.subsample(x=int(showimg.width() /200), y =int(showimg.height()/100))
+    targetimg.subsample(x=int(targetimg.width() /750), y =int(targetimg.height()/500))
+
+    avglabel = Label(root, image = avgimg)
+    showlabel = Label(root, image = showimg)
+    showlabel2 = Label(root, image = showimg)
+    avgtext = Label(root,  text = '')
+
+    targetlabel = Label(root, image = targetimg)
+    tragetText = Label(root, text = selected_univ)
+    MatchingBtn = Button(root, image = matchingimg)
+    
+    
 
     root.mainloop()
 
